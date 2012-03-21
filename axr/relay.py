@@ -38,7 +38,7 @@ def garble(name, secret):
     return h.hexdigest()
 
 def garbled_jid(jid, secret, domain):
-    if (jid is None): 
+    if (jid is None):
         return None
     if (jid.domain == domain):
         log.debug("garble: %s => %s" % (jid, jid))
@@ -69,15 +69,9 @@ class AXRComponent(ComponentXMPP):
         self.garble_secret = secret
         self.domain = domain
         self.bot_jid = JID(jid)
-        self.specific_bot_jid = JID(jid)
+        self.specific_bot_jid = JID(jid.bare)
         self.specific_bot_jid.resource = 'a'
         
-        # You don't need a session_start handler, but that is
-        # where you would broadcast initial presence.
-
-        # The message event is triggered whenever a message
-        # stanza is received. Be aware that that includes
-        # MUC messages and error messages.
         self.add_event_handler("message", self.message)
 
     def message(self, msg):
@@ -129,8 +123,9 @@ class AXRComponent(ComponentXMPP):
     def bot_command(self, msg):
         cmd = msg.get('body', '').split(' ');
         if (cmd[0] == self.WHOAMI): 
-            # send back the bare jid (resources confuse clients)
-            msg.reply(str(self.garbled_jid(msg['from']).bare))
+            body = str(self.garbled_jid(msg['from']))
+            
+            msg.reply(body)
             msg['from'] = self.specific_bot_jid;
             msg.send()
 
