@@ -44,7 +44,7 @@ def garbled_jid(jid, secret, domain):
         log.debug("garble: %s => %s" % (jid, jid))
         return jid
     else:
-        garbled = '%s@%s' % (garble(jid.full, secret), domain)
+        garbled = '%s@%s/a' % (garble(jid.full, secret), domain)
         names_lookup[garbled] = jid.full
         log.debug("garble: %s => %s" % (jid, garbled))
         return JID(garbled)
