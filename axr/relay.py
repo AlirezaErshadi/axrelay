@@ -131,7 +131,7 @@ class AXRComponent(ComponentXMPP):
         if (cmd[0] == self.WHOAMI): 
             # send back the bare jid (resources confuse clients)
             msg.reply(str(self.garbled_jid(msg['from']).bare))
-            msg['from'] = this.specific_bot_jid;
+            msg['from'] = self.specific_bot_jid;
             msg.send()
 
     def garbled_jid(self, jid):
