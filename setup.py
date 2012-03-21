@@ -22,6 +22,6 @@ setup(
     classifiers  = [],
     entry_points="""
        [console_scripts]
-       axr = axr.relay:main
+       anonymous_xmpp_relay = axr.relay:main
     """
 )
