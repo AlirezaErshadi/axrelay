@@ -69,7 +69,7 @@ class AXRComponent(ComponentXMPP):
         self.garble_secret = secret
         self.domain = domain
         self.bot_jid = JID(jid)
-        self.specific_bot_jid = JID(jid.bare)
+        self.specific_bot_jid = JID(jid)
         self.specific_bot_jid.resource = 'a'
         
         self.add_event_handler("message", self.message)
