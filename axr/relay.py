@@ -4,10 +4,11 @@
 """
 """
 
-import sys
-import logging
+from ConfigParser import RawConfigParser
 import getpass
+import logging
 from optparse import OptionParser
+import sys
 
 import sleekxmpp
 from sleekxmpp.componentxmpp import ComponentXMPP
@@ -64,9 +65,9 @@ class AXRComponent(ComponentXMPP):
     """
     """
 
-    def __init__(self, jid, secret, server, port, garble_secret, domain):
-        ComponentXMPP.__init__(self, jid, secret, server, port)
-        self.garble_secret = garble_secret
+    def __init__(self, jid, password, server, port, secret, domain):
+        ComponentXMPP.__init__(self, jid, password, server, port)
+        self.garble_secret = secret
         self.domain = domain
         self.bot_jid = JID(jid)
         
@@ -136,51 +137,50 @@ class AXRComponent(ComponentXMPP):
     def ungarbled_jid(self, jid):
         return ungarbled_jid(jid, self.domain)
 
+def die(msg):
+    log.error(msg)
+    sys.exit(1)
+
 def main():
     # Setup the command line arguments.
-    optp = OptionParser()
+    optparser = OptionParser()
 
     # Output verbosity options.
-    optp.add_option('-q', '--quiet', help='set logging to ERROR',
+    optparser.add_option('-q', '--quiet', help='set logging to ERROR',
                     action='store_const', dest='loglevel',
                     const=logging.ERROR, default=logging.INFO)
-    optp.add_option('-d', '--debug', help='set logging to DEBUG',
+    optparser.add_option('-d', '--debug', help='set logging to DEBUG',
                     action='store_const', dest='loglevel',
                     const=logging.DEBUG, default=logging.INFO)
-    optp.add_option('-v', '--verbose', help='set logging to COMM',
-                    action='store_const', dest='loglevel',
-                    const=5, default=logging.INFO)
+    optparser.add_option('-c', '--config', help='specify configuration file', 
+                    dest='config_file', default='/etc/axr.conf')
 
-    # JID and password options.
-    optp.add_option("-j", "--jid", dest="jid",
-                    help="JID to use")
-    optp.add_option("-p", "--password", dest="password",
-                    help="password to use")
-    optp.add_option("-s", "--server", dest="server",
-                    help="server to connect to")
-    optp.add_option("-P", "--port", dest="port",
-                    help="port to connect to")
-
-    opts, args = optp.parse_args()
-
-    if opts.jid is None:
-        opts.jid = raw_input("Component JID: ")
-    if opts.password is None:
-        opts.password = getpass.getpass("Password: ")
-    if opts.server is None:
-        opts.server = raw_input("Server: ")
-    if opts.port is None:
-        opts.port = int(raw_input("Port: "))
+    opts, args = optparser.parse_args()
 
     # Setup logging.
     logging.basicConfig(level=opts.loglevel,
                         format='%(levelname)-8s %(message)s')
 
-    xmpp = AXRComponent(opts.jid, opts.password, opts.server, opts.port, 'b00z', 'axr.localhost')
-    # xmpp.registerPlugin('xep_0030') # Service Discovery
-    # xmpp.registerPlugin('xep_0004') # Data Forms
-    # xmpp.registerPlugin('xep_0060') # PubSub
-    # xmpp.registerPlugin('xep_0199') # XMPP Ping
+    config = RawConfigParser()
+    if not config.read(opts.config_file):
+        die("Could not read config file %s", opts.config_file)
+
+    section = "main"
+    if not config.has_section(section):
+        die("Configuration file %s is missing the [%s] section" % (opts.config_file, section))
+
+    cfg = {}
+    for key in ["server", "password", "jid", "secret", "domain", "port"]:
+        if not config.has_option(section, key):
+            die('Missing option "%s" in [%s] section of %s' % (key, section, opts.config_file))
+        cfg[key] = config.get(section, key)
+    for key in ["port"]: 
+        try: 
+            cfg[key] = int(cfg[key])
+        except: 
+            die("option %s in section [%s] of %s must be an integer" % (key, section, opts.config_file))
+        
+    xmpp = AXRComponent(**cfg)
 
     # Connect to the XMPP server and start processing XMPP stanzas.
     if xmpp.connect():
