@@ -44,16 +44,16 @@ def garbled_jid(jid, secret, domain):
         log.debug("garble: %s => %s" % (jid, jid))
         return jid
     else:
-        garbled = '%s@%s/a' % (garble(jid.full, secret), domain)
-        names_lookup[garbled] = jid.full
+        garbled = JID('%s@%s/a' % (garble(jid.full, secret), domain))
+        names_lookup[garbled.bare] = jid.full
         log.debug("garble: %s => %s" % (jid, garbled))
-        return JID(garbled)
+        return garbled
         
 def ungarbled_jid(jid, domain):
     if (jid.domain != domain):
         return jid
     else:
-        ungarbled = names_lookup.get(jid.full) 
+        ungarbled = names_lookup.get(jid.bare)
         log.debug("ungarble: %s => %s" % (jid, ungarbled))
         if ungarbled is not None:
             return JID(ungarbled)
@@ -64,7 +64,6 @@ class AXRComponent(ComponentXMPP):
 
     """
     """
-
     def __init__(self, jid, password, server, port, secret, domain):
         ComponentXMPP.__init__(self, jid, password, server, port)
         self.garble_secret = secret
@@ -103,7 +102,7 @@ class AXRComponent(ComponentXMPP):
             return
 
         # is the message to this bot?
-        if (msg['to'] == self.bot_jid): 
+        if (msg['to'].bare == self.bot_jid.bare):
             return self.bot_command(msg)
         else:
             return self.relay_message(msg)
@@ -163,7 +162,7 @@ def main():
 
     config = RawConfigParser()
     if not config.read(opts.config_file):
-        die("Could not read config file %s", opts.config_file)
+        die("Could not read config file %s" % opts.config_file)
 
     section = "main"
     if not config.has_section(section):
