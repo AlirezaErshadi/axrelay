@@ -69,6 +69,8 @@ class AXRComponent(ComponentXMPP):
         self.garble_secret = secret
         self.domain = domain
         self.bot_jid = JID(jid)
+        self.specific_bot_jid = JID(jid)
+        self.specific_bot_jid.resource = 'a'
         
         # You don't need a session_start handler, but that is
         # where you would broadcast initial presence.
@@ -127,7 +129,9 @@ class AXRComponent(ComponentXMPP):
     def bot_command(self, msg):
         cmd = msg.get('body', '').split(' ');
         if (cmd[0] == self.WHOAMI): 
-            msg.reply(str(self.garbled_jid(msg['from'])))
+            # send back the bare jid (resources confuse clients)
+            msg.reply(str(self.garbled_jid(msg['from']).bare))
+            msg['from'] = this.specific_bot_jid;
             msg.send()
 
     def garbled_jid(self, jid):
