@@ -123,7 +123,7 @@ class AXRComponent(ComponentXMPP):
     def bot_command(self, msg):
         cmd = msg.get('body', '').split(' ');
         if (cmd[0] == self.WHOAMI): 
-            body = str(self.garbled_jid(msg['from']))
+            body = str(self.garbled_jid(msg['from']).bare)
             
             msg.reply(body)
             msg['from'] = self.specific_bot_jid;
