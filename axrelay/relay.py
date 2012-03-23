@@ -117,7 +117,7 @@ def build_relay(config, opts, storage):
     section = "relay"
 
     if not config.has_section(section):
-        die("Configuration file %s is missing the [%s] section" % (opts.config_file, section))
+        sys.exit("Configuration file %s is missing the [%s] section" % (opts.config_file, section))
 
     relay_cfg = {}
     for key in ["server", "password", "jid", "port"]:

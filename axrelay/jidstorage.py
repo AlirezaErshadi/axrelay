@@ -258,7 +258,7 @@ def build_memcache(config, opts):
 
     section = MEMCACHE_SECTION
     if not config.has_option(section, "servers"):
-        die('Missing option "%s" in [%s] section of %s' % (key, section, opts.config_file))
+        sys.exit('Missing option "%s" in [%s] section of %s' % (key, section, opts.config_file))
 
     # list config
     cfg['servers'] = [x.strip() for x in config.get(section, "servers").split(",") if x.strip()]
