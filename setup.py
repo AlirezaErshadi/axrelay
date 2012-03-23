@@ -18,7 +18,7 @@ setup(
     license      = 'MIT',
     platforms    = [ 'any' ],
     packages     = ["axrelay"],
-    install_requires = [ 'sleekxmpp', "dnspython", "pylibmc >= 1.2", "pycrypto" ],
+    install_requires = [ 'sleekxmpp', "dnspython", "pylibmc==1.2.2", "pycrypto" ],
     classifiers  = [],
     entry_points="""
         [console_scripts]
