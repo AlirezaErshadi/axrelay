@@ -18,10 +18,12 @@ setup(
     license      = 'MIT',
     platforms    = [ 'any' ],
     packages     = ["axr"],
-    install_requires     = [ 'sleekxmpp', "dnspython", "pylibmc" ],
+    install_requires     = [ 'sleekxmpp', "dnspython", "pylibmc", "pycrypto" ],
     classifiers  = [],
     entry_points="""
-       [console_scripts]
-       anonymous_xmpp_relay = axr.relay:main
+        [console_scripts]
+        anonymous_xmpp_relay = axr.relay:main
+        axrelay_hash = axr.jidhash:main
+        axrelay_secret = axr.jidhash:new_secret_main
     """
 )
