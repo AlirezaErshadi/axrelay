@@ -1,5 +1,6 @@
 import sleekxmpp
 from sleekxmpp.componentxmpp import ComponentXMPP
+from sleekxmpp.xmlstream import JID
 
 import copy
 import logging
