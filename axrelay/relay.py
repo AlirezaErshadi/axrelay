@@ -143,5 +143,7 @@ def build_relay(config, opts, storage):
     relay_cfg['storage'] = storage
     xmpp = AXRComponent(**relay_cfg)
     
+    return xmpp
+    
 if __name__ == "__main__":
     relay_main(sys.argv)
