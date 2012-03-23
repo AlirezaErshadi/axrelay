@@ -8,7 +8,7 @@ except ImportError:
     from distutils.core import setup, Command
 
 setup(
-    name             = "axr",
+    name             = "axrelay",
     version          = "0.1",
     description      = "",
     long_description = "",
@@ -17,13 +17,11 @@ setup(
     url          = 'http://github.com/forkner/axr',
     license      = 'MIT',
     platforms    = [ 'any' ],
-    packages     = ["axr"],
-    install_requires     = [ 'sleekxmpp', "dnspython", "pylibmc", "pycrypto" ],
+    packages     = ["axrelay"],
+    install_requires = [ 'sleekxmpp', "dnspython", "pylibmc", "pycrypto" ],
     classifiers  = [],
     entry_points="""
         [console_scripts]
-        anonymous_xmpp_relay = axr.relay:main
-        axrelay_hash = axr.jidhash:main
-        axrelay_secret = axr.jidhash:new_secret_main
+        axrelay = axrelay.cli:main
     """
 )

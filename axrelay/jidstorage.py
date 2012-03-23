@@ -207,7 +207,7 @@ def new_iv():
     return Random.get_random_bytes(AES.block_size)
 
     
-def build_storage(config):
+def build_storage(config, opts):
     """
     builds the storage backend configured in the 
     ConfigParser object given. 
@@ -217,11 +217,11 @@ def build_storage(config):
 
     if config.has_section(MEMCACHE_SECTION):
         section = MEMCACHE_SECTION
-        storage = build_memcache(config)
+        storage = build_memcache(config, opts)
         
     elif config.has_section(LOCAL_SECTION):
         section = LOCAL_SECTION
-        storage = build_local(config)
+        storage = build_local(config, opts)
     
     else:
         log.warn("No storage backend configured. running in local memory only.")
@@ -243,7 +243,7 @@ def no_storage():
 def build_local(config):
     return LocalStorage()
 
-def build_memcache(config):
+def build_memcache(config, opts):
     """
     creates a memcache based storage backend 
     depending on the configuration given. 

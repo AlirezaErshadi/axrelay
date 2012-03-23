@@ -1,39 +1,21 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-"""
-"""
-
-from ConfigParser import RawConfigParser
-import getpass
-import logging
-from optparse import OptionParser
-import sys
-
 import sleekxmpp
 from sleekxmpp.componentxmpp import ComponentXMPP
 
 import copy
+import logging
 import re
+import sys
 
 from jidhash import hash_jid, lookup_jid
 from jidstorage import build_storage
 
-# enforce utf-8 default encoding
-if sys.version_info < (3, 0):
-    reload(sys)
-    sys.setdefaultencoding('utf8')
-else:
-    raw_input = input
-
-
 log = logging.getLogger(__name__)
 
-
 class AXRComponent(ComponentXMPP):
-
     """
+    An anonymous xmpp relay component
     """
+    
     def __init__(self, jid, password, server, port, secret, domain, storage):
         """
         :param jid:      the jid of the component itself (bot)
@@ -100,7 +82,6 @@ class AXRComponent(ComponentXMPP):
         relay_msg.send()
         
     WHOAMI = "/whoami"
-    WHOIS  = "/whois"
     def bot_command(self, msg):
         cmd = msg.get('body', '').split(' ');
         if (cmd[0] == self.WHOAMI): 
@@ -115,34 +96,15 @@ class AXRComponent(ComponentXMPP):
     
     def lookup_jid(self, jid):
         return lookup_jid(jid, self.name_lookup)
+        
+def relay_main(argv):
+    from cli import build_base_options, parse_config    
+    optparser = build_base_options()
+    opts, args, config = parse_config(argv, optparser)
 
-def main():
-    # Setup the command line arguments.
-    optparser = OptionParser()
+    storage = build_storage(config, opts)
+    xmpp = build_relay(config, opts, storage)
 
-    # Output verbosity options.
-    optparser.add_option('-q', '--quiet', help='set logging to ERROR',
-                    action='store_const', dest='loglevel',
-                    const=logging.ERROR, default=logging.INFO)
-    optparser.add_option('-d', '--debug', help='set logging to DEBUG',
-                    action='store_const', dest='loglevel',
-                    const=logging.DEBUG, default=logging.INFO)
-    optparser.add_option('-c', '--config', help='specify configuration file', 
-                    dest='config_file', default='/etc/axr.conf')
-
-    opts, args = optparser.parse_args()
-
-    # Setup logging.
-    logging.basicConfig(level=opts.loglevel,
-                        format='%(levelname)-8s %(message)s')
-
-    config = RawConfigParser()
-    if not config.read(opts.config_file):
-        sys.exit("Could not read config file %s" % opts.config_file)
-    
-    storage = build_storage(config)
-    xmpp = build_relay(config, storage)
-    
     # Connect to the XMPP server and start processing XMPP stanzas.
     if xmpp.connect():
         xmpp.process(block=True)
@@ -150,13 +112,13 @@ def main():
     else:
         print("Unable to connect.")
 
-    
-def build_relay(config, storage):
+
+def build_relay(config, opts, storage):
     section = "relay"
-    
+
     if not config.has_section(section):
         die("Configuration file %s is missing the [%s] section" % (opts.config_file, section))
-    
+
     relay_cfg = {}
     for key in ["server", "password", "jid", "port"]:
         if not config.has_option(section, key):
@@ -180,6 +142,5 @@ def build_relay(config, storage):
     relay_cfg['storage'] = storage
     xmpp = AXRComponent(**relay_cfg)
     
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    relay_main(sys.argv)

@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import logging
+import sys
 
 from Crypto import Random
 from sleekxmpp.xmlstream import JID
@@ -89,7 +90,6 @@ def lookup_jid(hashed_jid, storage):
     else: 
         return None
 
-
 def new_secret():
     """
     creates a new storage secret suitable for the hash secret
@@ -98,43 +98,33 @@ def new_secret():
     secret = Random.get_random_bytes(32)
     return base64.b64encode(secret)
 
-def new_secret_main():
+def new_secret_main(argv):
     """
     prints a new storage secret to stdout
     """
+    from cli import build_base_options, parse_config    
+    optparser = build_base_options()
+    opts, args, config = parse_config(argv, optparser, require_config=False)
+
     print new_secret()
 
-def main():
+def hash_main(argv):
     """
     utility mainline for hashing and looking up jids.
     """
-    
-    from ConfigParser import RawConfigParser
-    from optparse import OptionParser
-    import sys
+
+    from cli import build_base_options, parse_config    
     from jidstorage import build_storage, no_storage
     
-    # Setup the command line arguments.
-    optparser = OptionParser()
-
-    optparser.add_option('-c', '--config', help='specify configuration file', 
-                    dest='config_file', default='/etc/axr.conf')
-
+    optparser = build_base_options()
+    
     optparser.add_option('-S', '--store', help='store results',
                     dest='build_storage', action="store_true", default=False)
     
     optparser.add_option("-l", "--lookup", help='lookup real jid for hashed jid',
                          dest="lookup", action="store_true", default=False)
-
-    opts, args = optparser.parse_args()
-
-    # Setup logging.
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s %(message)s')
-
-    config = RawConfigParser()
-    if not config.read(opts.config_file):
-        sys.exit("Could not read config file %s" % opts.config_file)
-
+        
+    opts, args, config = parse_config(argv, optparser)
 
     if opts.build_storage == True or opts.lookup:
         storage = build_storage(config)
@@ -160,6 +150,6 @@ def main():
         for real_jid in args:
             hashed_jid = hash_jid(JID(real_jid), cfg['secret'], cfg['domain'], storage)
             print "%s => %s" % (real_jid, hashed_jid)
-    
+
 if __name__ == "__main__":
-    main()
+    hash_main(sys.argv)
