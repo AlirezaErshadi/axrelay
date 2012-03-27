@@ -1,5 +1,6 @@
 import sys
 import logging
+from logging.config import dictConfig as configure_logging
 
 # enforce utf-8 default encoding
 if sys.version_info < (3, 0):
@@ -7,6 +8,9 @@ if sys.version_info < (3, 0):
     sys.setdefaultencoding('utf8')
 
 DEFAULT_CONFIG_FILE="/etc/axrelay.conf"
+
+
+log = logging.getLogger(__name__)
 
 def build_base_options():
     from optparse import OptionParser
@@ -25,7 +29,7 @@ def build_base_options():
                     action='store_const', dest='loglevel',
                     const=logging.DEBUG, default=logging.INFO)
                     
-    optparser.add_option('-l', '--log-file', help='log to file', 
+    optparser.add_option('--log-file', help='log to file', 
                     dest='logfile', metavar="FILE")
     
     return optparser
@@ -38,14 +42,36 @@ def parse_config(argv, optparser, require_config=True):
     
     # Setup logging.
     logging_opts = {
-        'level'   : opts.loglevel, 
-        'format'  :'%(asctime)s %(levelname)-8s %(message)s',
-        'datefmt' :'%m/%d/%Y %H:%M:%S'
+        'version': 1,
+        'disable_existing_loggers': False,
+        
+        'handlers': {
+            'console': {
+                'class'  : 'logging.StreamHandler',
+                'formatter': 'default',
+            },
+        },
+    
+        'root': {
+            'level': opts.loglevel,
+            'handlers': ['console', ]
+        },
+    
+        'formatters': {
+            'default': {
+                'format' : '%(asctime)s %(levelname)-8s %(message)s',
+            }
+        }
     }
     if (opts.logfile is not None):
-        logging_opts['filename'] = opts.logfile
-
-    logging.basicConfig(**logging_opts)
+        logging_opts['handlers']['file'] = {
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': opts.logfile,
+            'formatter': 'default'
+        }
+        logging_opts['root']['handlers'].append('file')
+    
+    configure_logging(logging_opts)
     
     config = RawConfigParser()
     if not config.read(opts.config_file) and require_config:
