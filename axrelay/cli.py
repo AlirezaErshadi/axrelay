@@ -24,6 +24,9 @@ def build_base_options():
     optparser.add_option('-d', '--debug', help='set logging to DEBUG',
                     action='store_const', dest='loglevel',
                     const=logging.DEBUG, default=logging.INFO)
+                    
+    optparser.add_option('-l', '--log-file', help='log to file', 
+                    dest='logfile', metavar="FILE")
     
     return optparser
     
@@ -34,11 +37,21 @@ def parse_config(argv, optparser, require_config=True):
     opts, args = optparser.parse_args(argv)
     
     # Setup logging.
-    logging.basicConfig(level=opts.loglevel, format='%(levelname)-8s %(message)s')
+    logging_opts = {
+        'level'   : opts.loglevel, 
+        'format'  :'%(asctime)s %(levelname)-8s %(message)s',
+        'datefmt' :'%m/%d/%Y %H:%M:%S'
+    }
+    if (opts.logfile is not None):
+        logging_opts['filename'] = opts.logfile
+
+    logging.basicConfig(**logging_opts)
     
     config = RawConfigParser()
     if not config.read(opts.config_file) and require_config:
-        sys.exit("Could not read config file %s" % opts.config_file)
+        msg = "Could not read config file %s" % opts.config_file
+        log.error(msg)
+        sys.exit(msg)
     
     return opts, args, config
 
