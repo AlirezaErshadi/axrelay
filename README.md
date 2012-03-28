@@ -17,4 +17,13 @@ run the axrelay binary:
     $ axrelay/bin/axrelay help
 
 
+create a configuration file for the component:
 
+    $ cp axrelay/src/axrelay/sample.conf /etc/axrelay.conf
+    $ vi /etc/axrelay.conf
+    ...
+
+
+run the component: 
+
+    $ axrelay/bin/axrelay run
