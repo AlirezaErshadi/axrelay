@@ -9,7 +9,7 @@ Quickstart
 
 install axrelay in a virtualenv using pip:
     
-    $ pip -E axrelay install -e git+git@github.com:getlantern/axrelay.git#egg=axrelay-dev
+    $ pip -E axrelay install -e git+https://github.com/getlantern/axrelay.git#egg=axrelay-dev
 
 
 run the axrelay binary:
