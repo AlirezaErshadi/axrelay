@@ -1,33 +1,34 @@
-Introduction
-============
-
-axrelay is an anonymous xmpp relay component for jabber servers
+axrelay is an anonymizing xmpp relay component for xmpp servers.
 
 
 Quickstart
 ==========
 
-install libmemcached
+Install libmemcached:
 
-    $ brew install libmemcached  # or equivalent on your system
+    brew install libmemcached  # or equivalent on your system
 
-install axrelay in a virtualenv using pip:
-    
-    $ virtualenv axrelay && axrelay/bin/pip install -e 'git+https://github.com/getlantern/axrelay.git#egg=axrelay-dev'
+Install axrelay in a virtualenv using pip:
 
+    virtualenv axrelay && axrelay/bin/pip install -e 'git+https://github.com/getlantern/axrelay.git#egg=axrelay-dev'
 
-run the axrelay binary:
+Run the axrelay binary:
 
-    $ axrelay/bin/axrelay help
+    axrelay/bin/axrelay help
 
+Create a configuration file (becoming root as needed):
 
-create a configuration file for the component:
+    cp axrelay/src/axrelay/sample.conf /etc/axrelay.conf
+    vi /etc/axrelay.conf
 
-    $ cp axrelay/src/axrelay/sample.conf /etc/axrelay.conf
-    $ vi /etc/axrelay.conf
-    ...
+To run against a local xmpp server for testing, prosody is installable via homebrew:
 
+    brew install https://prosody.im/files/homebrew/prosody.rb
 
-run the component: 
+To run against a local memcached:
 
-    $ axrelay/bin/axrelay run
+    /usr/local/opt/memcached/bin/memcached
+
+Finally, run axrelay:
+
+    axrelay/bin/axrelay run
