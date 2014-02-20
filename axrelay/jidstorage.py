@@ -221,7 +221,7 @@ def build_storage(config, opts):
         
     elif config.has_section(LOCAL_SECTION):
         section = LOCAL_SECTION
-        storage = build_local(config, opts)
+        storage = build_local()
     
     else:
         log.warn("No storage backend configured. running in local memory only.")
@@ -240,7 +240,7 @@ def no_storage():
     return NoStorage()
 
 
-def build_local(config):
+def build_local():
     return LocalStorage()
 
 def build_memcache(config, opts):
