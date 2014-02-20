@@ -9,6 +9,7 @@ from sleekxmpp.xmlstream import JID
 
 log = logging.getLogger(__name__)
 
+
 def secret_hash(name, secret):
     """
     creates a secure hash of the name using HMAC-SHA224
@@ -30,7 +31,8 @@ def secret_hash(name, secret):
     :param secret: secret value included in hash
     """
     h = hmac.new(secret, name, digestmod=hashlib.sha224)
-    return base64.b32encode(h.digest()).replace("=","").lower()
+    return base64.b32encode(h.digest()).replace("=", "").lower()
+
 
 def hash_jid(jid, secret, domain, storage):
     """
@@ -50,7 +52,7 @@ def hash_jid(jid, secret, domain, storage):
     """
     if (jid is None):
         return None
-        
+
     # already anonymous
     if (jid.domain == domain):
         log.debug("hash_jid: %s => %s" % (jid, jid))
@@ -58,15 +60,16 @@ def hash_jid(jid, secret, domain, storage):
     else:
         secret_name = secret_hash(jid.full, secret)
         hashed_jid = JID('%s@%s/a' % (secret_name, domain))
-        
-        # store the hashed jid using the bare portion of the 
+
+        # store the hashed jid using the bare portion of the
         # jid, we don't really care about the resource.
         key = hashed_jid.bare
         storage.set(key, jid.full)
-        
+
         log.debug("hash_jid: %s => %s" % (jid, hashed_jid))
         return hashed_jid
-        
+
+
 def lookup_jid(hashed_jid, storage):
     """
     look up the real jid of a previously generated 
@@ -78,17 +81,18 @@ def lookup_jid(hashed_jid, storage):
     :returns: the real JID associated with the given JID or None
               if there is no known mapping.
     """
-    # lookup using the bare portion of the jid only, 
+    # lookup using the bare portion of the jid only,
     # resource is ignored.
     key = hashed_jid.bare
-    
+
     real_jid = storage.get(hashed_jid.bare)
-    
+
     log.debug("lookup_jid: %s => %s" % (hashed_jid, real_jid))
     if real_jid is not None:
         return JID(real_jid)
-    else: 
+    else:
         return None
+
 
 def new_secret():
     """
@@ -98,32 +102,35 @@ def new_secret():
     secret = Random.get_random_bytes(32)
     return base64.b64encode(secret)
 
+
 def new_secret_main(argv):
     """
     prints a new storage secret to stdout
     """
-    from cli import build_base_options, parse_config    
+    from cli import build_base_options, parse_config
     optparser = build_base_options()
     opts, args, config = parse_config(argv, optparser, require_config=False)
 
     print new_secret()
+
 
 def hash_main(argv):
     """
     utility mainline for hashing and looking up jids.
     """
 
-    from cli import build_base_options, parse_config    
+    from cli import build_base_options, parse_config
     from jidstorage import build_storage, no_storage
-    
+
     optparser = build_base_options()
-    
+
     optparser.add_option('-S', '--store', help='store results',
-                    dest='build_storage', action="store_true", default=False)
-    
-    optparser.add_option("-l", "--lookup", help='lookup real jid for hashed jid',
-                         dest="lookup", action="store_true", default=False)
-        
+                         dest='build_storage', action="store_true", default=False)
+
+    optparser.add_option(
+        "-l", "--lookup", help='lookup real jid for hashed jid',
+        dest="lookup", action="store_true", default=False)
+
     opts, args, config = parse_config(argv, optparser)
 
     if opts.build_storage == True or opts.lookup:
@@ -135,20 +142,23 @@ def hash_main(argv):
         for hjid in args:
             real_jid = lookup_jid(JID(hjid), storage)
             print "%s => %s" % (hjid, real_jid)
-    
-    else: 
+
+    else:
         section = "hash"
         if not config.has_section(section):
-            sys.exit("Configuration file %s is missing the [%s] section" % (opts.config_file, section))
+            sys.exit("Configuration file %s is missing the [%s] section" % (
+                opts.config_file, section))
 
         cfg = {}
         for key in ["secret", "domain"]:
             if not config.has_option(section, key):
-                sys.exit('Missing option "%s" in [%s] section of %s' % (key, section, opts.config_file))
+                sys.exit('Missing option "%s" in [%s] section of %s' %
+                         (key, section, opts.config_file))
             cfg[key] = config.get(section, key)
 
         for real_jid in args:
-            hashed_jid = hash_jid(JID(real_jid), cfg['secret'], cfg['domain'], storage)
+            hashed_jid = hash_jid(
+                JID(real_jid), cfg['secret'], cfg['domain'], storage)
             print "%s => %s" % (real_jid, hashed_jid)
 
 if __name__ == "__main__":
