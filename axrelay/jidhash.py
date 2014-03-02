@@ -134,7 +134,7 @@ def hash_main(argv):
     opts, args, config = parse_config(argv, optparser)
 
     if opts.build_storage == True or opts.lookup:
-        storage = build_storage(config)
+        storage = build_storage(config, opts)
     else:
         storage = no_storage()
 
