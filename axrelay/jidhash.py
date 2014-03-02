@@ -13,20 +13,20 @@ log = logging.getLogger(__name__)
 def secret_hash(name, secret):
     """
     creates a secure hash of the name using HMAC-SHA224
-    
+
     The hash is encoded so that the output is a
     valid jabber id name.
-    
-    The hashed name alone is intended to provide no information 
+
+    The hashed name alone is intended to provide no information
     about the original jid.
-    
+
     validation of an association is trivial given the secret
     and a real jid (as the hash is itself a message authentication
-    code for the real jid) which is useful to avoid storage 
+    code for the real jid) which is useful to avoid storage
     poisoning.
-    
+
     :return: a secure hash of the name and secret given.
-    
+
     :param name: string to hash
     :param secret: secret value included in hash
     """
@@ -36,10 +36,10 @@ def secret_hash(name, secret):
 
 def hash_jid(jid, secret, domain, storage):
     """
-    transforms the given jid into an anonymized version 
-    and stores the mapping from anonymized jid -> jid in the 
+    transforms the given jid into an anonymized version
+    and stores the mapping from anonymized jid -> jid in the
     storage backend given.
-    
+
     :param jid: the JID to hash
     :param secret: the secret to use during hashing. different secrets
                    yeild different hashed jids.  Prevents rainbow attacks
@@ -47,8 +47,8 @@ def hash_jid(jid, secret, domain, storage):
     :param domain: the domain that the anonymous jids belong to.
     :param storage: where to store the mapping between anonymous and real jid,
                     must have set and get method.
-                    
-    :returns: a JID that is the anonymous alias of the JID given 
+
+    :returns: a JID that is the anonymous alias of the JID given
     """
     if (jid is None):
         return None
@@ -72,12 +72,12 @@ def hash_jid(jid, secret, domain, storage):
 
 def lookup_jid(hashed_jid, storage):
     """
-    look up the real jid of a previously generated 
-    anonymous jid in the storage backend given. 
-    
+    look up the real jid of a previously generated
+    anonymous jid in the storage backend given.
+
     :param hashed_jid: the hashed JID to lookup
     :param storage: the storage backend to use
-    
+
     :returns: the real JID associated with the given JID or None
               if there is no known mapping.
     """

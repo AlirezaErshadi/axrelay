@@ -54,7 +54,6 @@ class AXRComponent(ComponentXMPP):
                    for stanza objects and the Message stanza to see
                    how it may be used.
         """
-
         log.debug(msg)
 
         # drop errors, groupchat and unknown
