@@ -153,13 +153,13 @@ You should see something like the following indicating it connected to ejabberd 
 2014-03-08 16:30:29,048 DEBUG    Event triggered: session_start
 ```
 
-### Test axrelay
+### Test axrelay with non-Google xmpp accounts
 
 On your own machine, use one xmpp client (e.g. Adium) to log in with one xmpp account, e.g. requiredfield@dukgo.com,
 and use another xmpp client (e.g. Messages.app) to log in with another account, e.g. \_pants@dukgo.com.
 
-*Use dukgo.com accounts for testing since they are free to create
-and the dukgo.com xmpp server will reliably federate with your xmpp server.
+*Test with dukgo.com accounts first since they are free to create
+and the dukgo.com xmpp server reliably federates with other xmpp servers.
 Google's xmpp servers have been known to not always federate with other xmpp servers.*
 
 *Using different xmpp clients is recommended just to make it easier to keep straight which messages are coming from which accounts.*
@@ -191,3 +191,67 @@ Now send a message from requiredfield@dukgo.com to \_pants's anonymous jid:
 and requiredfield@dukgo.com should get it:
 
 ![screenshot](screenshots/reply2.png)
+
+**RESULT: Great success.**
+
+### Test axrelay with gmail.com xmpp accounts
+
+Log in to Adium with a gmail.com xmpp account, e.g. LanternFriend@gmail.com. Go to Contact \> Add Contact (⌘D), select "XMPP" from the "Contact Type" dropdown, fill in axrelay@xmpp.getlantern.org in the "Jabber ID" field, and hit Add:
+
+![screenshot](screenshots/add_axrelay.png)
+
+(Don't worry that axrelay does not accept the presence subscription request and therefore does not appear as online. It seems that simply having axrelay on your roster is all that's necessary to get Google's xmpp server to send messages to axrelay.)
+
+Send a "/whoami" message to axrelay@xmpp.getlantern.org. You should get back LanternFriend's anonymous jid:
+
+![screenshot](screenshots/whoami_LanternFriend.png)
+
+(You may notice that if you try to send subsequent "/whoami" messages, Google's xmpp server will not deliver them. Logging out and back in can fix this, though you'll get a new resource in your jid and so axrelay will give you a new anonymized jid.)
+
+Log in to Messages.app with a different gmail.com xmpp account, e.g. requiredfield256@gmail.com. Hit ⌘N to compose a new message, type axrelay@xmpp.getlantern.org in the "To:" field and press enter. Hover over it so it becomes a blue address widget, click the down arrow inside it to expand its popup menu, and select "Add Buddy":
+
+![screenshot](screenshots/add_buddy.png)
+
+Accept the defaults in the resulting dialog and now you should see axrelay in your roster:
+
+![screenshot](screenshots/messages_roster.png)
+
+(Again don't worry that axrelay does not accept the presence subscription request and therefore shows up as "Waiting for authorization".)
+
+Send axrelay a "/whoami" message. You should get back requiredfield256's anonymous jid:
+
+![screenshot](screenshots/whoami_requiredfield256.png)
+
+Now send a message from LanternFriend to requiredfield256's anonymous jid, **with the resource "/a" appended to it so Google will actually deliver it**:
+
+![screenshot](screenshots/to_anon_jid_with_resource.png)
+
+![screenshot](screenshots/testing_relay_gmail_jid.png)
+
+requiredfield256 should receive a corresponding message coming from LanternFriend's anonymized jid:
+
+![screenshot](screenshots/testing_relay_gmail_jid_received.png)
+
+However, the anonymized "from" address in this message is just a bare jid,
+so if requiredfield256 tries to reply, Google will not deliver the message due to the missing resource.
+
+But sending a new message to this address with the "/a" resource appended works:
+
+![screenshot](screenshots/testing_relay_back.png)
+
+**RESULT: Pretty much success.
+TODO: Change axrelay to include the "/a" resource in the "from" field when relaying messages so clients don't have to append it manually?**
+
+### Test axrelay with Google Apps for Domains xmpp accounts
+
+If you try to send a message to axrelay@xmpp.getlantern.org from a Google Apps for Domains xmpp account,
+Google's xmpp server will refuse to send it, even if you've added axrelay@xmpp.getlantern.org to your roster,
+and you'll get an error that the message could not be sent.
+This is apparently due to the missing resource,
+i.e. Google Apps for domains xmpp servers are apparently more strict
+and always require a resource in the jid when sending to an address whose presence you're not subscribed to:
+If you append some resource like "/foo" to the jid, Google will send the message.
+However, apparently, since axrelay runs as a component, it doesn't actually have a resource,
+and so will not receive any message addressed to it with a resource.
+
+**RESULT: Fail.**
