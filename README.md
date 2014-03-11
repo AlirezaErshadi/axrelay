@@ -11,105 +11,109 @@ axrelay is an anonymizing xmpp relay component for xmpp servers.
 
 ### Install dependencies
 
-    apt-get install git python-pip libpython-dev libmemcached10 libmemcached-dev memcached zlib1g-dev ejabberd
+    apt-get install git memcached python-setuptools python-pylibmc python-crypto prosody
 
-Note that this installs ejabberd 2.1.10-5ubuntu1 as the xmpp server, and memcached 1.4.14-0ubuntu4.1 as the anonymized jid store.
+Note that this installs prosody 0.8.2-4 as the xmpp server, and memcached 1.4.14-0ubuntu4.1 as the anonymized jid store.
 
 Install up-to-date versions of pip and virtualenv:
 
-    pip install -U pip virtualenv
+    easy_install-2.7 pip
+    pip install virtualenv
 
-### Set up ejabberd
+### Set up prosody
 
-    vim /etc/ejabberd/ejabberd.cfg
+    vim /etc/prosody/prosody.cfg.lua
 
-Change
+In the "Virtual hosts" section, add the following line:
 
-    {acl, admin, {user, "", "localhost"}}.
-
-under "%% Admin user" on line 58 to
-
-    {acl, admin, {user, "admin", "xmpp.getlantern.org"}}.
-
-Change
-
-    {hosts, ["localhost"]}.
-
-under "%% Hostname" on line 61 to
-
-    {hosts, ["localhost", "xmpp.getlantern.org"]}.
-
-In the "LISTENING PORTS" section, add an entry for axrelay around line 188 like:
-
-```erlang
-%% axrelay component
-{5560, ejabberd_service, [
-                          {ip, {127, 0, 0, 1}},
-                          {access, all},
-                          {shaper_rule, fast},
-                          {host, "xmpp.getlantern.org", [{password, "secret"}]}
-                          ]},
+```lua
+VirtualHost "lantern.io"
 ```
 
-changing "secret" to a secure password,
-and note that a port besides 5560 can be used.
-Using a hostname of "localhost" instead of "xmpp.getlantern.org" does not work, however.
+where "lantern.io" is the domain you want prosody to listen on.
 
-**TODO**: document how to configure SSL
+In the "Components" section, add the following:
 
-Now restart ejabberd to pick up the changes:
+```lua
+Component "axr.lantern.io"
+	component_secret = "axrelay_secret"
+```
 
-    /etc/init.d/ejabberd stop
-    ps ax | grep beam  # ensure it's really no longer running (this can bite you)
-    /etc/init.d/ejabberd start
+where "axr.lantern.io" is the subdomain you want axrelay to listen on,
+and where "axrelay\_secret" is a secure passphrase.
 
-Now create the admin user:
+#### SSL/TLS
 
-    ejabberdctl register admin xmpp.getlantern.org abracadabra
+As advised by http://wiki.xmpp.org/web/Securing\_XMPP#Prosody, locate
 
-replacing "abracadabra" with a secure password,
-and make sure you can log in to the server
-from an xmpp client
-as admin@xmpp.getlantern.org
-with the supplied password
-(requires pointing an A record from xmpp.getlantern.org to your server's IP address first).
+```lua
+c2s_require_encryption = false
+s2s_require_encryption = false
+```
+
+and change "false" to "true", and add `s2s_secure_auth = true` while you're at it.
+
+Copy the PEM-encoded certificate and RSA private key for the domain into /etc/prosody/certs.
+chgrp them both to group "ssl-cert",
+chmod them both to g+rw,
+and make the private key chmod o-rwx.
+
+Then locate the global ssl configuratio in prosody.cfg.lua:
+
+```lua
+ssl = {
+	key = "/etc/prosody/certs/localhost.key";
+	certificate = "/etc/prosody/certs/localhost.cert";
+}
+```
+
+and change the "localhost.{key,cert}" paths to the files you copied.
+
+Now run "/etc/init.d/prosody restart" and check /var/log/prosody/prosody.log to make sure all looks well.
+
+### DNS
+
+You could create an SRV record for xmpp on your domain,
+but an A record for "lantern.io" pointing to your server's IP
+and a CNAME for "axr" pointing to "lantern.io" will also do the trick.
 
 ### Set up axrelay
 
 Install axrelay in a virtualenv using pip:
 
-    virtualenv axrelay
-    axrelay/bin/pip install -e 'git+https://github.com/getlantern/axrelay.git#egg=axrelay-dev'
+    virtualenv --system-site-packages /axrelay
+    /axrelay/bin/pip install -e 'git+https://github.com/getlantern/axrelay.git#egg=axrelay-dev'
 
 Make sure you can now run the axrelay binary:
 
-    axrelay/bin/axrelay help
+    /axrelay/bin/axrelay help
 
 Create a configuration file:
 
-    cp axrelay/src/axrelay/sample.conf /usr/local/etc/axrelay.conf
-    vim /usr/local/etc/axrelay.conf
+    cp /axrelay/src/axrelay/sample.conf /etc/axrelay.conf
+    vim /etc/axrelay.conf
 
-(axrelay looks for configuration in /usr/local/etc/axrelay.conf by default.)
+(axrelay looks for configuration in /etc/axrelay.conf by default.)
 
 The configuration in the **[relay]** section
-must match the configuration for the axrelay component in /etc/ejabberd/ejabberd.cfg
-documented above, e.g.
+must match the configuration for the axrelay component in prosody.cfg.lua documented above, e.g.
 
 ```ini
 [relay]
-jid      = axrelay@xmpp.getlantern.org
+jid      = axr.lantern.io
 # using "localhost" instead of "127.0.0.1" here causes axrelay to use ipv6,
 # which can make it fail to connect to the xmpp server:
 server   = 127.0.0.1
-port     = 5560
-password = (the secure password you set in ejabberd.cfg earlier)
+# the default prosody port for external components
+port     = 5347
+# the secure passphrase you set in prosody.cfg.lua
+password = axrelay_secret
 ```
 
 For the **[hash]** section,
 run "axrelay secret" to create a new secret for the "secret" setting.
 The "domain" setting is the domain which will be used for anonymized jids
-(e.g. "xmpp.getlantern.org")
+(e.g. "axr.lantern.io")
 and should be the domain the xmpp server is listening on
 to allow messages sent to the anonymized addresses to be received and relayed to the original addresses by axrelay.
 
@@ -139,60 +143,58 @@ Finally, run axrelay:
 You should see something like the following indicating it connected to ejabberd successfully:
 
 ```
-2014-03-08 16:30:29,032 DEBUG    Connecting to 127.0.0.1:5560
-2014-03-08 16:30:29,033 DEBUG    Connecting to 127.0.0.1:5560
-2014-03-08 16:30:29,035 DEBUG    Event triggered: connected
-2014-03-08 16:30:29,035 DEBUG     ==== TRANSITION disconnected -> connected
-2014-03-08 16:30:29,036 DEBUG    Starting HANDLER THREAD
-2014-03-08 16:30:29,038 DEBUG    Loading event runner
-2014-03-08 16:30:29,039 DEBUG    SEND (IMMED): <stream:stream xmlns="jabber:component:accept" xmlns:stream="http://etherx.jabber.org/streams" to='axrelay@xmpp.getlantern.org'>
-2014-03-08 16:30:29,043 DEBUG    RECV: <stream:stream from="axrelay@xmpp.getlantern.org" id="1554921912">
-2014-03-08 16:30:29,044 DEBUG    SEND (IMMED): <handshake xmlns="jabber:component:accept">f0916cb81cde3fc44641d630388b639a3777bc21</handshake>
-2014-03-08 16:30:29,046 DEBUG    RECV: <handshake />
-2014-03-08 16:30:29,047 DEBUG    Event triggered: session_bind
-2014-03-08 16:30:29,048 DEBUG    Event triggered: session_start
+2014-03-11 15:25:41,095 DEBUG    Connecting to 127.0.0.1:5347
+2014-03-11 15:25:41,097 DEBUG    Event triggered: connected
+2014-03-11 15:25:41,097 DEBUG     ==== TRANSITION disconnected -> connected
+2014-03-11 15:25:41,097 DEBUG    SEND (IMMED): <stream:stream xmlns="jabber:component:accept" xmlns:stream="http://etherx.jabber.org/streams" to='axr.lantern.io'>
+2014-03-11 15:25:41,098 DEBUG    RECV: <stream:stream from="axr.lantern.io" id="da4cd8e0-87c6-4649-b0a7-b5f0a4b29846">
+2014-03-11 15:25:41,098 DEBUG    SEND (IMMED): <handshake xmlns="jabber:component:accept">4ee77380535665a37e88180f6cc6df2d46a6df8e</handshake>
+2014-03-11 15:25:41,099 DEBUG    RECV: <handshake />
+2014-03-11 15:25:41,100 DEBUG    Event triggered: session_bind
+2014-03-11 15:25:41,100 DEBUG    Event triggered: session_start
 ```
 
 ### Test axrelay with non-Google xmpp accounts
 
-On your own machine, use one xmpp client (e.g. Adium) to log in with one xmpp account, e.g. requiredfield@dukgo.com,
-and use another xmpp client (e.g. Messages.app) to log in with another account, e.g. \_pants@dukgo.com.
+On your own machine, log in to an xmpp client with two different xmpp accounts.
+We'll refer to one as account A, and the other as account B.
 
 *Test with dukgo.com accounts first since they are free to create
 and the dukgo.com xmpp server reliably federates with other xmpp servers.
 Google's xmpp servers have been known to not always federate with other xmpp servers.*
 
-*Using different xmpp clients is recommended just to make it easier to keep straight which messages are coming from which accounts.*
+*As of 2014-03-09, gmail.com's and Google domains' xmpp servers were not supporting encrypted connections.*
 
-*If using Messages.app, you may need to check the "Notify me about messages from unknown contacts" checkbox in Preferences \> General.*
+Now send a message from A to axr.lantern.io with body "/whoami".
+You should get a reply with A's new anonymized jid, A':
 
-Now send a message from \_pants@dukgo.com to axrelay@xmpp.getlantern.org with body "/whoami".
-You should get a reply from axrelay@xmpp.getlantern.org with \_pants's new anonymous jid:
+![screenshot](screenshots/0.A-whoami-A'.png)
 
-![screenshot](screenshots/whoami1.png)
+Now send a message from B to axr.lantern.io with body "/whoami".
+You should get a reply with B's new anonymized jid, B':
 
-Now send a message from requiredfield@dukgo.com to axrelay@xmpp.getlantern.org with body "/whoami".
-You should get a reply with requiredfield's new anonymous jid:
+![screenshot](screenshots/1.B-whoami-B'.png)
 
-![screenshot](screenshots/whoami2.png)
+Now send a message from B to A':
 
-Now send a message from requiredfield@dukgo.com to \_pants's anonymous jid:
+![screenshot](screenshots/2.B-messages-A'.png)
 
-![screenshot](screenshots/relay1.png)
+A should now receive a message with the body of the message you just sent, but coming from B':
 
-\_pants@dukgo.com should now receive a message with the body of the message you just sent, but coming from requiredfield's anonymous jid:
+![screenshot](screenshots/3.A-receives-message-from-B'.png)
 
-![screenshot](screenshots/relay2.png)
+A should be able to reply to this message:
 
-\_pants@dukgo.com should be able to reply to this message:
+![screenshot](screenshots/4.A-replies-to-B'.png)
 
-![screenshot](screenshots/reply1.png)
+and B should get it:
 
-and requiredfield@dukgo.com should get it:
-
-![screenshot](screenshots/reply2.png)
+![screenshot](screenshots/5.B-receives-message-from-A'.png)
 
 **RESULT: Great success.**
+
+----
+***The following tested axrelay running against ejabberd on xmpp.getlantern.org, before getting a new axrelay instance set up against prosody on lantern.io:***
 
 ### Test axrelay with gmail.com xmpp accounts
 
@@ -242,7 +244,7 @@ But sending a new message to this address with the "/a" resource appended works:
 **RESULT: Pretty much success.
 TODO: Change axrelay to include the "/a" resource in the "from" field when relaying messages so clients don't have to append it manually?**
 
-### Test axrelay with Google Apps for Domains xmpp accounts
+### Test axrelay with Google Apps domains xmpp accounts
 
 If you try to send a message to axrelay@xmpp.getlantern.org from a Google Apps for Domains xmpp account,
 Google's xmpp server will refuse to send it, even if you've added axrelay@xmpp.getlantern.org to your roster,
