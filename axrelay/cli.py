@@ -7,7 +7,7 @@ if sys.version_info < (3, 0):
     reload(sys)
     sys.setdefaultencoding('utf8')
 
-DEFAULT_CONFIG_FILE = "/usr/local/etc/axrelay.conf"
+DEFAULT_CONFIG_FILE = "/etc/axrelay.conf"
 
 
 log = logging.getLogger(__name__)
