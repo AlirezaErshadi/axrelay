@@ -1,7 +1,11 @@
 # axrelay
 
 axrelay is an anonymizing xmpp relay component for xmpp servers.
+See [Testing axrelay](#testing-axrelay) below for demonstrations with screenshots.
 
+The official Lantern axrelay instance is running against [prosody](https://prosody.im) on lantern.io
+but is not yet in use in production since Google's xmpp servers do not yet support encrypted server-to-server (s2s) connections.
+IM Observatory test results are available at https://xmpp.net/result.php?domain=lantern.io&type=client and https://xmpp.net/result.php?domain=lantern.io&type=server.
 
 ## Setting up a server
 
@@ -153,6 +157,8 @@ You should see something like the following indicating it connected to ejabberd 
 2014-03-11 15:25:41,100 DEBUG    Event triggered: session_bind
 2014-03-11 15:25:41,100 DEBUG    Event triggered: session_start
 ```
+
+## Testing axrelay
 
 ### Test axrelay with non-Google xmpp accounts
 
