@@ -4,7 +4,7 @@ axrelay is an anonymizing xmpp relay component for xmpp servers.
 See [Testing axrelay](#testing-axrelay) below for demonstrations with screenshots.
 
 The official Lantern axrelay instance is running against [prosody](https://prosody.im) on lantern.io
-but is not yet in use in production since Google's xmpp servers do not yet support encrypted server-to-server (s2s) connections.
+but is not yet in use in production since Googleʼs xmpp servers do not yet support encrypted server-to-server (s2s) connections.
 IM Observatory test results are available at https://xmpp.net/result.php?domain=lantern.io&type=client and https://xmpp.net/result.php?domain=lantern.io&type=server.
 
 ## Setting up a server
@@ -55,7 +55,7 @@ c2s_require_encryption = false
 s2s_require_encryption = false
 ```
 
-and change "false" to "true", and add `s2s_secure_auth = true` while you're at it.
+and change "false" to "true", and add `s2s_secure_auth = true` while youʼre at it.
 
 Copy the PEM-encoded certificate and RSA private key for the domain into /etc/prosody/certs.
 chgrp them both to group "ssl-cert",
@@ -78,7 +78,7 @@ Now run "/etc/init.d/prosody restart" and check /var/log/prosody/prosody.log to 
 ### DNS
 
 You could create an SRV record for xmpp on your domain,
-but an A record for "lantern.io" pointing to your server's IP
+but an A record for "lantern.io" pointing to your serverʼs IP
 and a CNAME for "axr" pointing to "lantern.io" will also do the trick.
 
 ### Set up axrelay
@@ -133,9 +133,9 @@ To use the memcached store,
 leave the **[memcache]** section of the axrelay config uncommented,
 and leave the **[local\_storage]** section commented out.
 
-After running the "apt-get install" command above, a memcached instance was installed and automatically started on your server. Run "/etc/init.d/memcached status" to verify it's running.
+After running the "apt-get install" command above, a memcached instance was installed and automatically started on your server. Run "/etc/init.d/memcached status" to verify itʼs running.
 
-To use this memcached instance as axrelay's anonymized jid store, leave the "servers" setting set to "localhost".
+To use this memcached instance as axrelayʼs anonymized jid store, leave the "servers" setting set to "localhost".
 
 Run "axrelay secret" again and use the result for the "encrypt" setting
 to make axrelay encrypt keys and values in the store.
@@ -163,39 +163,41 @@ You should see something like the following indicating it connected to ejabberd 
 ### Test axrelay with non-Google xmpp accounts
 
 On your own machine, log in to an xmpp client with two different xmpp accounts.
-We'll refer to one as account A, and the other as account B.
+Weʼll refer to one as account *A*, and the other as account *B*.
 
 *Test with dukgo.com accounts first since they are free to create
 and the dukgo.com xmpp server reliably federates with other xmpp servers.
-Google's xmpp servers have been known to not always federate with other xmpp servers.*
+Googleʼs xmpp servers have been known to not always federate with other xmpp servers.*
 
-*As of 2014-03-09, gmail.com's and Google domains' xmpp servers were not supporting encrypted connections.*
+*As of 2014-03-09, gmail.comʼs and Google apps domainsʼ xmpp servers were not supporting encrypted connections.*
 
-Now send a message from A to axr.lantern.io with body "/whoami".
-You should get a reply with A's new anonymized jid, A':
+Now send a message from *A* to axr.lantern.io with body "/whoami".
+You should get a reply with *A*ʼs new anonymized jid, *Aʹ*:
 
 ![screenshot](screenshots/0.A-whoami-A'.png)
 
-Now send a message from B to axr.lantern.io with body "/whoami".
-You should get a reply with B's new anonymized jid, B':
+Now send a message from *B* to axr.lantern.io with body "/whoami".
+You should get a reply with *B*ʼs new anonymized jid, *Bʹ*:
 
 ![screenshot](screenshots/1.B-whoami-B'.png)
 
-Now send a message from B to A':
+Now send a message from *B* to *Aʹ*:
 
 ![screenshot](screenshots/2.B-messages-A'.png)
 
-A should now receive a message with the body of the message you just sent, but coming from B':
+*A* should now receive a message with the body of the message you just sent, **but coming from *Bʹ*, not *B*:**
 
 ![screenshot](screenshots/3.A-receives-message-from-B'.png)
 
-A should be able to reply to this message:
+*A* can now reply to this message:
 
 ![screenshot](screenshots/4.A-replies-to-B'.png)
 
-and B should get it:
+and *B* should get a matching message from *Aʹ*:
 
 ![screenshot](screenshots/5.B-receives-message-from-A'.png)
+
+So axrelay allows *A* and *B* to communicate with each other without ever discovering one anotherʼs real addresses.
 
 **RESULT: Great success.**
 
@@ -208,7 +210,7 @@ Log in to Adium with a gmail.com xmpp account, e.g. LanternFriend@gmail.com. Go 
 
 ![screenshot](screenshots/add_axrelay.png)
 
-(Don't worry that axrelay does not accept the presence subscription request and therefore does not appear as online. It seems that simply having axrelay on your roster is all that's necessary to get Google's xmpp server to send messages to axrelay.)
+(Donʼt worry that axrelay does not accept the presence subscription request and therefore does not appear as online. It seems that simply having axrelay on your roster is all thatʼs necessary to get Googleʼs xmpp server to send messages to axrelay.)
 
 Send a "/whoami" message to axrelay@xmpp.getlantern.org. You should get back LanternFriend's anonymous jid:
 
